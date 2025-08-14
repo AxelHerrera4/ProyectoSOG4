@@ -1,0 +1,20 @@
+{
+  "0": {
+    "name": "System Idle Process",
+    "priority": "media",
+    "status": "activo",
+    "added": "2025-08-13T14:39:53.574263"
+  },
+  "4": {
+    "name": "System",
+    "priority": "media",
+    "status": "activo",
+    "added": "2025-08-13T22:14:52.464027"
+  },
+  "4844": {
+    "name": "sqlservr.exe",
+    "priority": "media",
+    "status": "activo",
+    "added": "2025-08-13T22:15:17.231626"
+  }
+}
