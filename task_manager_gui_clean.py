@@ -217,9 +217,7 @@ class TaskManagerGUI:
                                          command=self.update_processes_list)
         accessible_check.pack(side=tk.LEFT, padx=10)
         
-        help_btn = ttk.Button(filter_frame, text="Ayuda de Permisos", 
-                             command=self.show_permissions_help)
-        help_btn.pack(side=tk.RIGHT, padx=5)
+    # (Botón de ayuda de permisos eliminado por solicitud del usuario)
         
         # Lista de procesos con scroll
         list_frame = tk.Frame(processes_frame)
@@ -467,39 +465,7 @@ class TaskManagerGUI:
         # Programar próxima actualización
         self.root.after(5000, self.update_system_info)
     
-    def show_permissions_help(self):
-        """Muestra ayuda sobre permisos de procesos"""
-        help_text = """AYUDA: PERMISOS DE PROCESOS
-
-¿Por qué aparece "Acceso Denegado"?
-• Los procesos del sistema están protegidos
-• Solo puedes acceder a procesos de tu usuario
-• Algunos procesos requieren permisos de administrador
-
-TIPOS DE PROCESOS:
-• Procesos de Usuario: Acceso completo
-• Procesos del Sistema: Acceso limitado o denegado
-• Procesos de Servicio: Requieren permisos especiales
-
-SOLUCIONES:
-1. EJECUTAR COMO ADMINISTRADOR
-   • Windows: Clic derecho → "Ejecutar como administrador"
-   • Linux/Mac: Usar "sudo" antes del comando
-
-2. FILTRAR SOLO ACCESIBLES
-   • Marcar "Solo procesos accesibles"
-   • Muestra únicamente procesos que puedes gestionar
-
-3. USAR HERRAMIENTAS DEL SISTEMA
-   • Windows: Administrador de tareas (Ctrl+Shift+Esc)
-   • Linux: htop, top
-   • Mac: Monitor de actividad
-
-RECOMENDACIÓN:
-Para uso normal, marque "Solo procesos accesibles" para evitar errores de permisos.
-Para administración del sistema, ejecute como administrador."""
-        
-        messagebox.showinfo("Ayuda de Permisos", help_text)
+    # La función de ayuda de permisos fue eliminada por solicitud del usuario.
     
     def get_safe_process_info(self, proc):
         """Obtiene información de proceso de manera segura"""
@@ -731,6 +697,44 @@ Para administración del sistema, ejecute como administrador."""
         self.ax1.clear()
         self.ax2.clear()
         self.canvas.draw()
+
+    def ask_priority_choice(self, title="Seleccionar Prioridad", initial="media"):
+        """Muestra un diálogo modal con un Combobox para elegir prioridad.
+
+        Devuelve la prioridad seleccionada ('alta'|'media'|'baja') o None si se cancela.
+        """
+        dialog = tk.Toplevel(self.root)
+        dialog.title(title)
+        dialog.transient(self.root)
+        dialog.resizable(False, False)
+        dialog.grab_set()
+
+        frame = tk.Frame(dialog, padx=10, pady=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(frame, text="Prioridad:", bg='#f39c12', fg='white').pack(anchor=tk.W)
+        var = tk.StringVar(value=initial)
+        combo = ttk.Combobox(frame, textvariable=var, values=('alta', 'media', 'baja'), state='readonly', width=20)
+        combo.pack(anchor=tk.W, pady=(5, 10))
+        combo.focus_set()
+
+        result = {'value': None}
+
+        def on_ok():
+            result['value'] = var.get()
+            dialog.destroy()
+
+        def on_cancel():
+            dialog.destroy()
+
+        btn_frame = tk.Frame(frame)
+        btn_frame.pack(fill=tk.X)
+        tk.Button(btn_frame, text='OK', width=10, command=on_ok).pack(side=tk.LEFT, padx=(0, 5))
+        tk.Button(btn_frame, text='Cancelar', width=10, command=on_cancel).pack(side=tk.LEFT)
+
+        # Esperar a que se cierre
+        self.root.wait_window(dialog)
+        return result['value']
     
     def add_watched_process(self):
         """Agregar proceso a observados"""
@@ -741,9 +745,10 @@ Para administración del sistema, ejecute como administrador."""
                 if psutil.pid_exists(pid):
                     process = psutil.Process(pid)
                     name = process.name()
-                    priority = simpledialog.askstring("Prioridad", 
-                                                     "Prioridad de observación (alta/media/baja):", 
-                                                     initialvalue="media")
+                    # Usar Combobox modal para evitar entrada libre
+                    priority = self.ask_priority_choice("Prioridad de observación", initial="media")
+                    if priority is None:
+                        return
                     
                     self.watched_processes[str(pid)] = {
                         'name': name,
@@ -771,20 +776,20 @@ Para administración del sistema, ejecute como administrador."""
         pid = item['values'][0]
         
         current_data = self.watched_processes.get(str(pid), {})
-        
-        new_priority = simpledialog.askstring("Editar Prioridad", 
-                                             "Nueva prioridad:", 
-                                             initialvalue=current_data.get('priority', 'media'))
+
+        # Usar Combobox modal para editar prioridad
+        new_priority = self.ask_priority_choice("Editar Prioridad", initial=current_data.get('priority', 'media'))
+        # Estado puede seguir siendo texto libre por ahora
         new_status = simpledialog.askstring("Editar Estado", 
                                            "Nuevo estado:", 
                                            initialvalue=current_data.get('status', 'activo'))
-        
+
         if new_priority or new_status:
             if new_priority:
                 self.watched_processes[str(pid)]['priority'] = new_priority
             if new_status:
                 self.watched_processes[str(pid)]['status'] = new_status
-            
+
             self.save_watched_processes()
             self.update_watched_list()
             messagebox.showinfo("Éxito", "Proceso actualizado")
