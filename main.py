@@ -37,7 +37,7 @@ def main():
             return
         
         # Iniciar aplicación
-        from task_manager_gui_clean import TaskManagerGUI
+        from administrador_de_tareas import TaskManagerGUI
         app = TaskManagerGUI()
         app.run()
         
