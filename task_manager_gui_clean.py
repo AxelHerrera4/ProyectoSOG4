@@ -242,16 +242,14 @@ class TaskManagerGUI:
             else:
                 self.processes_tree.column(col, width=120)
         
-        # Scrollbars
+        # Scrollbar vertical
         v_scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.processes_tree.yview)
-        h_scrollbar = ttk.Scrollbar(list_frame, orient=tk.HORIZONTAL, command=self.processes_tree.xview)
-        self.processes_tree.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
-        
+        self.processes_tree.configure(yscrollcommand=v_scrollbar.set)
+
         # Empaquetar
         self.processes_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
-        
+
         # Cargar procesos inicialmente
         self.update_processes_list()
     
@@ -374,65 +372,53 @@ class TaskManagerGUI:
         """Crea la pestaña de acciones sobre procesos"""
         actions_frame = ttk.Frame(self.notebook)
         self.notebook.add(actions_frame, text="Acciones")
-        
+
         # Marco de título
         title_frame = tk.Frame(actions_frame, bg='#34495e', relief='ridge', bd=2)
         title_frame.pack(fill=tk.X, padx=10, pady=10)
-        
-        ttk.Label(title_frame, text="ACCIONES SOBRE PROCESOS", 
-                 style='Subtitle.TLabel').pack(pady=10)
-        
+        ttk.Label(title_frame, text="ACCIONES SOBRE PROCESOS", style='Subtitle.TLabel').pack(pady=10)
+
         # Marco principal de acciones
         main_actions_frame = tk.Frame(actions_frame, bg='#2c3e50')
         main_actions_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
+
         # Terminar proceso
-        terminate_frame = tk.LabelFrame(main_actions_frame, text="Terminar Proceso", 
+        terminate_frame = tk.LabelFrame(main_actions_frame, text="Terminar Proceso",
                                        bg='#e74c3c', fg='white', font=('Arial', 12, 'bold'))
         terminate_frame.pack(fill=tk.X, pady=10)
-        
         tk.Label(terminate_frame, text="PID del proceso:", bg='#e74c3c', fg='white').pack(anchor=tk.W, padx=10, pady=5)
         self.terminate_pid_var = tk.StringVar()
         tk.Entry(terminate_frame, textvariable=self.terminate_pid_var, width=20).pack(anchor=tk.W, padx=10)
-        
-        terminate_btn = tk.Button(terminate_frame, text="TERMINAR PROCESO", 
-                                 bg='#c0392b', fg='white', font=('Arial', 10, 'bold'),
-                                 command=self.terminate_process)
+        terminate_btn = tk.Button(terminate_frame, text="TERMINAR PROCESO",
+                                 bg='#c0392b', fg='white', font=('Arial', 10, 'bold'), command=self.terminate_process)
         terminate_btn.pack(pady=10)
-        
-        # Cambiar prioridad
-        priority_frame = tk.LabelFrame(main_actions_frame, text="Cambiar Prioridad", 
+
+        # Cambiar prioridad (acciones) - opciones en inglés, readonly
+        priority_frame = tk.LabelFrame(main_actions_frame, text="Cambiar Prioridad",
                                       bg='#f39c12', fg='white', font=('Arial', 12, 'bold'))
         priority_frame.pack(fill=tk.X, pady=10)
-        
         tk.Label(priority_frame, text="PID del proceso:", bg='#f39c12', fg='white').pack(anchor=tk.W, padx=10, pady=5)
         self.priority_pid_var = tk.StringVar()
         tk.Entry(priority_frame, textvariable=self.priority_pid_var, width=20).pack(anchor=tk.W, padx=10)
-        
         tk.Label(priority_frame, text="Nueva prioridad:", bg='#f39c12', fg='white').pack(anchor=tk.W, padx=10, pady=(10,5))
         self.priority_var = tk.StringVar(value="normal")
         priority_combo = ttk.Combobox(priority_frame, textvariable=self.priority_var,
                                      values=["realtime", "high", "normal", "below_normal", "idle"],
-                                     width=17)
+                                     width=17, state='readonly')
         priority_combo.pack(anchor=tk.W, padx=10)
-        
-        priority_btn = tk.Button(priority_frame, text="CAMBIAR PRIORIDAD", 
-                                bg='#e67e22', fg='white', font=('Arial', 10, 'bold'),
-                                command=self.change_priority)
+        priority_btn = tk.Button(priority_frame, text="CAMBIAR PRIORIDAD",
+                                bg='#e67e22', fg='white', font=('Arial', 10, 'bold'), command=self.change_priority)
         priority_btn.pack(pady=10)
-        
+
         # Información detallada
-        info_frame = tk.LabelFrame(main_actions_frame, text="Información Detallada", 
+        info_frame = tk.LabelFrame(main_actions_frame, text="Información Detallada",
                                   bg='#3498db', fg='white', font=('Arial', 12, 'bold'))
         info_frame.pack(fill=tk.X, pady=10)
-        
         tk.Label(info_frame, text="PID del proceso:", bg='#3498db', fg='white').pack(anchor=tk.W, padx=10, pady=5)
         self.info_pid_var = tk.StringVar()
         tk.Entry(info_frame, textvariable=self.info_pid_var, width=20).pack(anchor=tk.W, padx=10)
-        
-        info_btn = tk.Button(info_frame, text="VER INFORMACIÓN", 
-                            bg='#2980b9', fg='white', font=('Arial', 10, 'bold'),
-                            command=self.show_process_info)
+        info_btn = tk.Button(info_frame, text="VER INFORMACIÓN",
+                            bg='#2980b9', fg='white', font=('Arial', 10, 'bold'), command=self.show_process_info)
         info_btn.pack(pady=10)
     
     def update_system_info(self):
@@ -524,7 +510,15 @@ class TaskManagerGUI:
         except Exception:
             info['status'] = '[Error]'
             info['accessible'] = False
-        
+        # Intentar obtener la línea de comando para búsquedas avanzadas
+        try:
+            cmdline = proc.cmdline()
+            info['cmdline'] = ' '.join(cmdline) if cmdline else ''
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
+            info['cmdline'] = ''
+        except Exception:
+            info['cmdline'] = ''
+
         return info
     
     def update_processes_list(self):
@@ -594,23 +588,27 @@ class TaskManagerGUI:
             for proc in psutil.process_iter():
                 try:
                     info = self.get_safe_process_info(proc)
-                    
+
                     # Aplicar filtro de accesibilidad si está activado
                     if self.show_accessible_only.get() and not info['accessible']:
                         continue
-                    
-                    # Buscar en el nombre del proceso
-                    if search_term in info['name'].lower():
+
+                    # Buscar por PID exacto, nombre parcial o cmdline parcial
+                    pid_str = str(info['pid'])
+                    name_lower = info['name'].lower() if info['name'] else ''
+                    cmd_lower = info.get('cmdline', '').lower()
+
+                    if (search_term == pid_str) or (search_term in name_lower) or (search_term in cmd_lower):
                         pid = info['pid']
                         name = info['name']
                         cpu = f"{info['cpu_percent']:.1f}"
                         mem_percent = f"{info['memory_percent']:.1f}"
                         mem_mb = f"{info['memory_mb']:.1f}"
                         status = info['status']
-                        
+
                         self.processes_tree.insert('', 'end', values=(pid, name, cpu, mem_percent, mem_mb, status))
                         found_count += 1
-                        
+
                 except Exception:
                     continue
             
@@ -701,7 +699,8 @@ class TaskManagerGUI:
     def ask_priority_choice(self, title="Seleccionar Prioridad", initial="media"):
         """Muestra un diálogo modal con un Combobox para elegir prioridad.
 
-        Devuelve la prioridad seleccionada ('alta'|'media'|'baja') o None si se cancela.
+        El parámetro `initial` es el valor interno (por ejemplo 'normal' o 'high').
+        Devuelve el valor interno seleccionado o None si se cancela.
         """
         dialog = tk.Toplevel(self.root)
         dialog.title(title)
@@ -711,17 +710,31 @@ class TaskManagerGUI:
 
         frame = tk.Frame(dialog, padx=10, pady=10)
         frame.pack(fill=tk.BOTH, expand=True)
-
         tk.Label(frame, text="Prioridad:", bg='#f39c12', fg='white').pack(anchor=tk.W)
-        var = tk.StringVar(value=initial)
-        combo = ttk.Combobox(frame, textvariable=var, values=('alta', 'media', 'baja'), state='readonly', width=20)
+        # Por defecto, usar mapeo de prioridades del sistema con etiquetas en español
+        priority_choices = [
+            ('realtime', 'Tiempo real'),
+            ('high', 'Alta'),
+            ('normal', 'Normal'),
+            ('below_normal', 'Por debajo de Normal'),
+            ('idle', 'Inactiva'),
+        ]
+
+        # Determinar etiqueta inicial
+        label_map = {val: label for val, label in priority_choices}
+        display_initial = label_map.get(initial, list(label_map.values())[2])
+        var = tk.StringVar(value=display_initial)
+        combo = ttk.Combobox(frame, textvariable=var, values=[label for _, label in priority_choices], state='readonly', width=25)
         combo.pack(anchor=tk.W, pady=(5, 10))
         combo.focus_set()
 
         result = {'value': None}
 
         def on_ok():
-            result['value'] = var.get()
+            # Convertir etiqueta de vuelta a valor interno
+            sel_label = var.get()
+            inv_map = {label: val for val, label in priority_choices}
+            result['value'] = inv_map.get(sel_label)
             dialog.destroy()
 
         def on_cancel():
@@ -735,6 +748,41 @@ class TaskManagerGUI:
         # Esperar a que se cierre
         self.root.wait_window(dialog)
         return result['value']
+
+    def ask_status_choice(self, title="Seleccionar Estado", initial="activo"):
+        """Diálogo modal para elegir un estado predefinido (no texto libre)."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title(title)
+        dialog.transient(self.root)
+        dialog.resizable(False, False)
+        dialog.grab_set()
+
+        frame = tk.Frame(dialog, padx=10, pady=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(frame, text="Estado:", bg='#34495e', fg='white').pack(anchor=tk.W)
+        status_choices = [('activo','Activo'), ('suspendido','Suspendido'), ('terminado','Terminado'), ('inactivo','Inactivo')]
+        label_map = {val: label for val, label in status_choices}
+        display_initial = label_map.get(initial, list(label_map.values())[0])
+        var = tk.StringVar(value=display_initial)
+        combo = ttk.Combobox(frame, textvariable=var, values=[label for _, label in status_choices], state='readonly', width=25)
+        combo.pack(anchor=tk.W, pady=(5,10))
+
+        result = {'value': None}
+        def on_ok():
+            inv_map = {label: val for val, label in status_choices}
+            result['value'] = inv_map.get(var.get())
+            dialog.destroy()
+        def on_cancel():
+            dialog.destroy()
+
+        btn_frame = tk.Frame(frame)
+        btn_frame.pack(fill=tk.X)
+        tk.Button(btn_frame, text='OK', width=10, command=on_ok).pack(side=tk.LEFT, padx=(0,5))
+        tk.Button(btn_frame, text='Cancelar', width=10, command=on_cancel).pack(side=tk.LEFT)
+
+        self.root.wait_window(dialog)
+        return result['value']
     
     def add_watched_process(self):
         """Agregar proceso a observados"""
@@ -746,13 +794,17 @@ class TaskManagerGUI:
                     process = psutil.Process(pid)
                     name = process.name()
                     # Usar Combobox modal para evitar entrada libre
-                    priority = self.ask_priority_choice("Prioridad de observación", initial="media")
+                    priority = self.ask_priority_choice("Prioridad de observación", initial="normal")
                     if priority is None:
                         return
                     
+                    # priority returned is internal key like 'media' or 'alta' mapping; normalize to internal keys
+                    # Mapamos prioridades comunes de observación a valores internos
+                    obs_priority_map = {'alta': 'high', 'media': 'normal', 'baja': 'idle', 'high': 'high', 'normal': 'normal', 'idle': 'idle'}
+                    stored_priority = obs_priority_map.get(priority, 'normal')
                     self.watched_processes[str(pid)] = {
                         'name': name,
-                        'priority': priority or 'media',
+                        'priority': stored_priority,
                         'status': 'activo',
                         'added': datetime.now().isoformat()
                     }
@@ -776,18 +828,22 @@ class TaskManagerGUI:
         pid = item['values'][0]
         
         current_data = self.watched_processes.get(str(pid), {})
-
-        # Usar Combobox modal para editar prioridad
-        new_priority = self.ask_priority_choice("Editar Prioridad", initial=current_data.get('priority', 'media'))
-        # Estado puede seguir siendo texto libre por ahora
-        new_status = simpledialog.askstring("Editar Estado", 
-                                           "Nuevo estado:", 
-                                           initialvalue=current_data.get('status', 'activo'))
+        # Usar Combobox modal para editar prioridad (initial debe ser valor interno)
+        new_priority = self.ask_priority_choice("Editar Prioridad", initial=current_data.get('priority', 'normal'))
+        # Estado ahora es selección restringida
+        new_status = self.ask_status_choice("Editar Estado", initial=current_data.get('status', 'activo'))
 
         if new_priority or new_status:
+            # Ensure the watched entry still exists
+            if str(pid) not in self.watched_processes:
+                messagebox.showerror("Error", "El proceso observado no existe")
+                return
+
             if new_priority:
+                # new_priority is internal key from ask_priority_choice
                 self.watched_processes[str(pid)]['priority'] = new_priority
             if new_status:
+                # new_status comes from ask_status_choice and is internal
                 self.watched_processes[str(pid)]['status'] = new_status
 
             self.save_watched_processes()
@@ -819,30 +875,34 @@ class TaskManagerGUI:
         
         for pid, data in self.watched_processes.items():
             added_date = data['added'][:19].replace('T', ' ')
-            
+            # Mostrar prioridades en español
+            display_priority_map = {'realtime': 'Tiempo real', 'high': 'Alta', 'normal': 'Normal', 'below_normal': 'Por debajo de Normal', 'idle': 'Inactiva'}
+            display_priority = display_priority_map.get(data.get('priority', 'normal'), data.get('priority', 'Normal'))
+            display_status = data.get('status', '').capitalize()
+
             self.watched_tree.insert('', 'end', values=(
-                pid, data['name'], data['priority'], 
-                data['status'], added_date
+                pid, data['name'], display_priority,
+                display_status, added_date
             ))
     
     def terminate_process(self):
-        """Termina un proceso"""
+        """Termina un proceso por PID con manejo de permisos."""
         pid_str = self.terminate_pid_var.get().strip()
         if not pid_str.isdigit():
             messagebox.showerror("Error", "El PID debe ser numérico")
             return
-        
+
         pid = int(pid_str)
         try:
             if psutil.pid_exists(pid):
                 process = psutil.Process(pid)
-                
+
                 # Intentar obtener el nombre del proceso
                 try:
                     name = process.name()
                 except psutil.AccessDenied:
                     name = f"PID {pid} (nombre no accesible)"
-                
+
                 # Advertencia especial para procesos del sistema
                 try:
                     username = process.username()
@@ -855,12 +915,11 @@ PID: {pid}
 
 Terminar procesos del sistema puede causar inestabilidad.
 ¿Está seguro de continuar?"""
-                        
                         if not messagebox.askyesno("Proceso del Sistema", warning_msg):
                             return
                 except psutil.AccessDenied:
                     pass
-                
+
                 if messagebox.askyesno("Confirmar", f"¿Terminar proceso {name} (PID: {pid})?"):
                     try:
                         process.terminate()
@@ -877,7 +936,6 @@ Soluciones posibles:
 3. Solo puedes terminar procesos de tu usuario
 
 ¿Desea intentar forzar la terminación? (solo procesos de usuario)"""
-                        
                         if messagebox.askyesno("Permisos Insuficientes", error_msg):
                             try:
                                 process.kill()
