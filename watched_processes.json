@@ -16,5 +16,17 @@
     "priority": "media",
     "status": "activo",
     "added": "2025-08-13T22:15:17.231626"
+  },
+  "19020": {
+    "name": "Spotify.exe",
+    "priority": "high",
+    "status": "terminado",
+    "added": "2025-08-14T21:31:23.682236"
+  },
+  "23784": {
+    "name": "Spotify.exe",
+    "priority": "normal",
+    "status": "activo",
+    "added": "2025-08-14T21:37:19.730634"
   }
 }

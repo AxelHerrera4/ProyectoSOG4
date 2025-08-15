@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""
-Administrador de Tareas - Interfaz Gráfica
-Sistema de gestión de procesos con monitoreo en tiempo real
-"""
+# Administrador de Tareas - Interfaz Gráfica
+# Sistema de gestión de procesos con monitoreo en tiempo real
+#
 
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
@@ -450,9 +449,7 @@ class TaskManagerGUI:
         
         # Programar próxima actualización
         self.root.after(5000, self.update_system_info)
-    
-    # La función de ayuda de permisos fue eliminada por solicitud del usuario.
-    
+        
     def get_safe_process_info(self, proc):
         """Obtiene información de proceso de manera segura"""
         info = {
@@ -928,14 +925,7 @@ Terminar procesos del sistema puede causar inestabilidad.
                         self.update_processes_list()
                     except psutil.AccessDenied:
                         # Sugerir alternativas
-                        error_msg = f"""Permisos insuficientes para terminar el proceso {name}
-
-Soluciones posibles:
-1. Ejecutar este programa como Administrador (Windows) o con sudo (Linux/Mac)
-2. El proceso pertenece al sistema y requiere permisos especiales
-3. Solo puedes terminar procesos de tu usuario
-
-¿Desea intentar forzar la terminación? (solo procesos de usuario)"""
+                        error_msg = f"""Permisos insuficientes para terminar el proceso {name}"""
                         if messagebox.askyesno("Permisos Insuficientes", error_msg):
                             try:
                                 process.kill()
@@ -973,13 +963,7 @@ Soluciones posibles:
                 
                 # Advertencia para prioridades altas
                 if priority in ['realtime', 'high']:
-                    warning_msg = f"""ADVERTENCIA: Prioridad Alta/Realtime
-
-Proceso: {name}
-Nueva prioridad: {priority.upper()}
-
-Las prioridades altas pueden afectar el rendimiento del sistema.
-¿Continuar con el cambio?"""
+                    warning_msg = f"""ADVERTENCIA: Prioridad Alta/Realtime"""
                     
                     if not messagebox.askyesno("Prioridad Alta", warning_msg):
                         return
@@ -1003,18 +987,8 @@ Las prioridades altas pueden afectar el rendimiento del sistema.
                     self.priority_pid_var.set("")
                     
                 except psutil.AccessDenied:
-                    error_msg = f"""Permisos insuficientes para cambiar prioridad
-
-Proceso: {name}
-Prioridad deseada: {priority}
-
-Soluciones:
-1. Ejecutar como Administrador (Windows) o con sudo (Linux/Mac)
-2. Solo puedes cambiar prioridad de procesos de tu usuario
-3. Algunos procesos del sistema están protegidos
-
-Nota: Las prioridades 'realtime' y 'high' siempre requieren permisos especiales."""
-                    
+                    # Error de permisos - requiere ejecutar como administrador
+                    error_msg = f"Permisos insuficientes para cambiar prioridad del proceso {name}. Ejecutar como Administrador."
                     messagebox.showerror("Permisos Insuficientes", error_msg)
                     
             else:
